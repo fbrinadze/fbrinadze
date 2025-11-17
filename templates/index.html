@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home Budget Tracker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Home Budget Tracker</h1>
+            <p class="tagline">Decrease Debt. Save Money.</p>
+        </header>
+
+        <nav class="tabs">
+            <button class="tab-btn active" onclick="showTab('dashboard')">Dashboard</button>
+            <button class="tab-btn" onclick="showTab('income')">Income</button>
+            <button class="tab-btn" onclick="showTab('expenses')">Expenses</button>
+            <button class="tab-btn" onclick="showTab('budgets')">Budgets</button>
+            <button class="tab-btn" onclick="showTab('debts')">Debts</button>
+            <button class="tab-btn" onclick="showTab('savings')">Savings Goals</button>
+        </nav>
+
+        <!-- Dashboard Tab -->
+        <div id="dashboard" class="tab-content active">
+            <h2>Financial Overview</h2>
+
+            <div class="summary-cards">
+                <div class="card">
+                    <h3>Monthly Income</h3>
+                    <p class="amount positive" id="monthly-income">$0.00</p>
+                </div>
+                <div class="card">
+                    <h3>Monthly Expenses</h3>
+                    <p class="amount negative" id="monthly-expenses">$0.00</p>
+                </div>
+                <div class="card">
+                    <h3>Net Monthly</h3>
+                    <p class="amount" id="net-monthly">$0.00</p>
+                </div>
+                <div class="card">
+                    <h3>Total Debt</h3>
+                    <p class="amount negative" id="total-debt">$0.00</p>
+                </div>
+                <div class="card">
+                    <h3>Total Savings</h3>
+                    <p class="amount positive" id="total-savings">$0.00</p>
+                </div>
+            </div>
+
+            <div class="charts-section">
+                <div class="chart-container">
+                    <h3>Expenses by Category</h3>
+                    <canvas id="expenses-chart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Budget vs Actual</h3>
+                    <canvas id="budget-chart"></canvas>
+                </div>
+            </div>
+
+            <div class="list-section">
+                <h3>Active Debts</h3>
+                <div id="debts-summary"></div>
+            </div>
+
+            <div class="list-section">
+                <h3>Savings Goals Progress</h3>
+                <div id="savings-summary"></div>
+            </div>
+        </div>
+
+        <!-- Income Tab -->
+        <div id="income" class="tab-content">
+            <h2>Income Tracking</h2>
+
+            <div class="form-section">
+                <h3>Add Income</h3>
+                <form id="income-form">
+                    <div class="form-group">
+                        <label>Amount ($)</label>
+                        <input type="number" id="income-amount" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Source</label>
+                        <input type="text" id="income-source" placeholder="e.g., Salary, Freelance" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Date</label>
+                        <input type="date" id="income-date" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <input type="text" id="income-description">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Income</button>
+                </form>
+            </div>
+
+            <div class="list-section">
+                <h3>Income History</h3>
+                <div id="income-list"></div>
+            </div>
+        </div>
+
+        <!-- Expenses Tab -->
+        <div id="expenses" class="tab-content">
+            <h2>Expense Tracking</h2>
+
+            <div class="form-section">
+                <h3>Add Expense</h3>
+                <form id="expense-form">
+                    <div class="form-group">
+                        <label>Amount ($)</label>
+                        <input type="number" id="expense-amount" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select id="expense-category" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Date</label>
+                        <input type="date" id="expense-date" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <input type="text" id="expense-description">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Expense</button>
+                </form>
+            </div>
+
+            <div class="list-section">
+                <h3>Expense History</h3>
+                <div id="expense-list"></div>
+            </div>
+        </div>
+
+        <!-- Budgets Tab -->
+        <div id="budgets" class="tab-content">
+            <h2>Budget Management</h2>
+
+            <div class="form-section">
+                <h3>Set Monthly Budget</h3>
+                <form id="budget-form">
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select id="budget-category" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Amount ($)</label>
+                        <input type="number" id="budget-amount" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Month</label>
+                        <select id="budget-month" required>
+                            <option value="1">January</option>
+                            <option value="2">February</option>
+                            <option value="3">March</option>
+                            <option value="4">April</option>
+                            <option value="5">May</option>
+                            <option value="6">June</option>
+                            <option value="7">July</option>
+                            <option value="8">August</option>
+                            <option value="9">September</option>
+                            <option value="10">October</option>
+                            <option value="11">November</option>
+                            <option value="12">December</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Year</label>
+                        <input type="number" id="budget-year" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Set Budget</button>
+                </form>
+            </div>
+
+            <div class="list-section">
+                <h3>Current Month Budgets</h3>
+                <div id="budget-list"></div>
+            </div>
+        </div>
+
+        <!-- Debts Tab -->
+        <div id="debts" class="tab-content">
+            <h2>Debt Management</h2>
+
+            <div class="form-section">
+                <h3>Add Debt</h3>
+                <form id="debt-form">
+                    <div class="form-group">
+                        <label>Name</label>
+                        <input type="text" id="debt-name" placeholder="e.g., Credit Card, Student Loan" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Principal Amount ($)</label>
+                        <input type="number" id="debt-principal" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Current Balance ($)</label>
+                        <input type="number" id="debt-balance" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Interest Rate (%)</label>
+                        <input type="number" id="debt-interest" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Minimum Payment ($)</label>
+                        <input type="number" id="debt-payment" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Due Date (Day of Month)</label>
+                        <input type="number" id="debt-due" min="1" max="31">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Debt</button>
+                </form>
+            </div>
+
+            <div class="list-section">
+                <h3>Active Debts</h3>
+                <div id="debt-list"></div>
+            </div>
+
+            <div id="payment-modal" class="modal">
+                <div class="modal-content">
+                    <span class="close">&times;</span>
+                    <h3>Record Debt Payment</h3>
+                    <form id="payment-form">
+                        <input type="hidden" id="payment-debt-id">
+                        <div class="form-group">
+                            <label>Amount ($)</label>
+                            <input type="number" id="payment-amount" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Date</label>
+                            <input type="date" id="payment-date" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Description</label>
+                            <input type="text" id="payment-description">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Record Payment</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Savings Goals Tab -->
+        <div id="savings" class="tab-content">
+            <h2>Savings Goals</h2>
+
+            <div class="form-section">
+                <h3>Create Savings Goal</h3>
+                <form id="savings-form">
+                    <div class="form-group">
+                        <label>Goal Name</label>
+                        <input type="text" id="savings-name" placeholder="e.g., Emergency Fund, Vacation" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Target Amount ($)</label>
+                        <input type="number" id="savings-target" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Current Amount ($)</label>
+                        <input type="number" id="savings-current" step="0.01" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Deadline (Optional)</label>
+                        <input type="date" id="savings-deadline">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Create Goal</button>
+                </form>
+            </div>
+
+            <div class="list-section">
+                <h3>Your Savings Goals</h3>
+                <div id="savings-list"></div>
+            </div>
+
+            <div id="contribution-modal" class="modal">
+                <div class="modal-content">
+                    <span class="close">&times;</span>
+                    <h3>Add Contribution</h3>
+                    <form id="contribution-form">
+                        <input type="hidden" id="contribution-goal-id">
+                        <div class="form-group">
+                            <label>Amount ($)</label>
+                            <input type="number" id="contribution-amount" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Date</label>
+                            <input type="date" id="contribution-date" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Description</label>
+                            <input type="text" id="contribution-description">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Add Contribution</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
