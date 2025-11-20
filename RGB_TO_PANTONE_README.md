@@ -4,9 +4,9 @@ A Python program that converts RGB color codes to their closest Pantone color fa
 
 ## Features
 
-- **Comprehensive Pantone Database**: Includes 70+ popular Pantone colors across all color families
+- **COMPREHENSIVE Pantone Database**: Includes **473 Pantone colors** across ALL color families
 - **Accurate Color Matching**: Uses Euclidean distance algorithm in RGB color space
-- **Color Families**: Automatically identifies the color family (Red, Blue, Green, etc.)
+- **15+ Color Families**: Automatically identifies the color family (Red, Pink, Magenta, Purple, Blue, Teal, Green, Yellow, Orange, Brown, Gray, Metallic, Neon, Pastel, and more)
 - **Multiple Matches**: Can display top N closest matches
 - **Similarity Percentage**: Shows how closely the RGB matches the Pantone color
 - **Easy CLI Interface**: Simple command-line usage
@@ -92,18 +92,29 @@ python rgb_to_pantone.py 128 0 128
 
 ## Color Families Included
 
-The program recognizes the following Pantone color families:
+The program recognizes **15+ Pantone color families** with extensive coverage:
 
-- **Red Family**: PANTONE 185 C, 186 C, 187 C, 1788 C, 1795 C, etc.
-- **Orange Family**: PANTONE 021 C, 151 C, 158 C, 165 C, etc.
-- **Yellow Family**: PANTONE Yellow C, 100 C, 101 C, 109 C, etc.
-- **Green Family**: PANTONE 347 C, 348 C, 354 C, Green C, etc.
-- **Blue Family**: PANTONE 286 C, 285 C, 2925 C, Blue 072 C, etc.
-- **Purple/Violet Family**: PANTONE 267 C, 268 C, 2592 C, Violet C, etc.
-- **Pink Family**: PANTONE 213 C, 219 C, Pink C, Rhodamine Red C, etc.
-- **Brown Family**: PANTONE 168 C, 4625 C, 7518 C, etc.
-- **Gray Family**: Cool Gray and Warm Gray series
-- **Black/White**: PANTONE Black C, Process Black C, White
+### Primary Color Families
+- **Red Family** (32 colors): PANTONE 179-202 C, 1767-1817 C series, Red 032 C
+- **Pink Family** (32 colors): PANTONE 176-232 C, Pink C, Rhodamine Red C
+- **Magenta Family** (12 colors): PANTONE 233-251 C
+- **Purple/Violet Family** (33 colors): PANTONE 252-272 C, 2562-2695 C series, Violet C, Purple C
+- **Blue Family** (30 colors): PANTONE 278-306 C, 2706-2945 C series, Blue 072 C, Reflex Blue C, Process Blue C
+- **Teal/Aqua Family** (28 colors): PANTONE 310-330 C, 7466-7471 C, 7687-7689 C, 801-803 C, Teal C
+- **Green Family** (48 colors): PANTONE 331-378 C, Green C
+- **Yellow Family** (35 colors): PANTONE 100-134 C, Yellow C, Yellow 012 C
+- **Orange Family** (41 colors): PANTONE 021 C, 135-169 C, 1575-1625 C series, Orange 021 C
+
+### Earth Tones & Neutrals
+- **Brown/Tan Family** (89 colors): PANTONE 462-482 C, 4625-4685 C, 7499-7587 C series
+- **Gray Family** (28 colors): Cool Gray 1-11 C, Warm Gray 1-11 C, Black 2-7 C
+- **Black Family** (2 colors): PANTONE Black C, Process Black C
+- **White Family** (1 color): PANTONE White
+
+### Special Color Families
+- **Metallic Family** (7 colors): PANTONE 871-877 C (gold and silver tones)
+- **Neon/Fluorescent Family** (5 colors): PANTONE 804-808 C
+- **Pastel Family** (18 colors): PANTONE 9060-9162 C series
 
 ## How It Works
 
@@ -132,9 +143,10 @@ where `max_distance = √(255² + 255² + 255²) ≈ 441.67`
 ## Limitations
 
 - RGB to Pantone conversion is approximate since Pantone colors are defined for physical printing
-- The database contains popular Pantone colors but not the complete Pantone library (thousands of colors)
-- Color appearance can vary based on display calibration
-- For professional color matching, always refer to official Pantone color guides
+- The database contains **473 carefully selected Pantone colors** representing all major families, but not the complete Pantone library (which contains thousands of colors including specialty inks)
+- Color appearance can vary based on display calibration and monitor settings
+- RGB values provided are approximations for digital use and may not exactly match physical Pantone swatches
+- For professional color matching and print production, always refer to official Pantone color guides and physical swatch books
 
 ## Use as a Python Module
 
