@@ -7,6 +7,63 @@ from flask_sqlalchemy import SQLAlchemy
 db = SQLAlchemy()
 
 
+class Account(db.Model):
+    """Track financial accounts - bank accounts, credit cards, IRA, 401k"""
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    account_type = db.Column(db.String(50), nullable=False)  # checking, savings, credit_card, ira, 401k, investment
+    institution = db.Column(db.String(100))  # Bank/Brokerage name
+    balance = db.Column(db.Float, nullable=False, default=0)
+    credit_limit = db.Column(db.Float)  # For credit cards
+    interest_rate = db.Column(db.Float)  # APY for savings, APR for credit cards
+    account_number_last4 = db.Column(db.String(4))  # Last 4 digits for reference
+    is_asset = db.Column(db.Boolean, default=True)  # True for assets, False for liabilities (credit cards)
+    notes = db.Column(db.String(500))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    transactions = db.relationship('AccountTransaction', backref='account', lazy=True, cascade='all, delete-orphan')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'account_type': self.account_type,
+            'institution': self.institution,
+            'balance': self.balance,
+            'credit_limit': self.credit_limit,
+            'interest_rate': self.interest_rate,
+            'account_number_last4': self.account_number_last4,
+            'is_asset': self.is_asset,
+            'notes': self.notes,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
+
+
+class AccountTransaction(db.Model):
+    """Track transactions for accounts"""
+    id = db.Column(db.Integer, primary_key=True)
+    account_id = db.Column(db.Integer, db.ForeignKey('account.id'), nullable=False)
+    transaction_type = db.Column(db.String(50), nullable=False)  # deposit, withdrawal, transfer, interest, dividend
+    amount = db.Column(db.Float, nullable=False)
+    description = db.Column(db.String(200))
+    date = db.Column(db.Date, nullable=False, default=datetime.utcnow)
+    category = db.Column(db.String(50))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'account_id': self.account_id,
+            'transaction_type': self.transaction_type,
+            'amount': self.amount,
+            'description': self.description,
+            'date': self.date.isoformat() if self.date else None,
+            'category': self.category,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+
+
 class Income(db.Model):
     """Track income entries"""
     id = db.Column(db.Integer, primary_key=True)
@@ -14,6 +71,7 @@ class Income(db.Model):
     source = db.Column(db.String(100), nullable=False)
     date = db.Column(db.Date, nullable=False, default=datetime.utcnow)
     description = db.Column(db.String(200))
+    account_id = db.Column(db.Integer, db.ForeignKey('account.id'))  # Optional: link to account
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def to_dict(self):
@@ -23,6 +81,7 @@ class Income(db.Model):
             'source': self.source,
             'date': self.date.isoformat() if self.date else None,
             'description': self.description,
+            'account_id': self.account_id,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
 
@@ -34,6 +93,7 @@ class Expense(db.Model):
     category = db.Column(db.String(50), nullable=False)
     date = db.Column(db.Date, nullable=False, default=datetime.utcnow)
     description = db.Column(db.String(200))
+    account_id = db.Column(db.Integer, db.ForeignKey('account.id'))  # Optional: link to account
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def to_dict(self):
@@ -43,6 +103,7 @@ class Expense(db.Model):
             'category': self.category,
             'date': self.date.isoformat() if self.date else None,
             'description': self.description,
+            'account_id': self.account_id,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
 
@@ -51,6 +112,7 @@ class Debt(db.Model):
     """Track debt accounts"""
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
+    debt_type = db.Column(db.String(50), default='other')  # credit_card, student_loan, mortgage, auto_loan, personal_loan, other
     principal = db.Column(db.Float, nullable=False)
     current_balance = db.Column(db.Float, nullable=False)
     interest_rate = db.Column(db.Float, nullable=False)  # Annual percentage rate
@@ -64,6 +126,7 @@ class Debt(db.Model):
         return {
             'id': self.id,
             'name': self.name,
+            'debt_type': self.debt_type,
             'principal': self.principal,
             'current_balance': self.current_balance,
             'interest_rate': self.interest_rate,

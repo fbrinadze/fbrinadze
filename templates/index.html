@@ -11,21 +11,35 @@
     <div class="container">
         <header>
             <h1>Home Budget Tracker</h1>
-            <p class="tagline">Decrease Debt. Save Money.</p>
+            <p class="tagline">Track Accounts. Decrease Debt. Build Wealth.</p>
         </header>
 
         <nav class="tabs">
             <button class="tab-btn active" onclick="showTab('dashboard')">Dashboard</button>
+            <button class="tab-btn" onclick="showTab('accounts')">Accounts</button>
             <button class="tab-btn" onclick="showTab('income')">Income</button>
             <button class="tab-btn" onclick="showTab('expenses')">Expenses</button>
             <button class="tab-btn" onclick="showTab('budgets')">Budgets</button>
             <button class="tab-btn" onclick="showTab('debts')">Debts</button>
+            <button class="tab-btn" onclick="showTab('debt-payoff')">Debt Payoff</button>
             <button class="tab-btn" onclick="showTab('savings')">Savings Goals</button>
         </nav>
 
         <!-- Dashboard Tab -->
         <div id="dashboard" class="tab-content active">
             <h2>Financial Overview</h2>
+
+            <!-- Net Worth Section -->
+            <div class="net-worth-section">
+                <div class="net-worth-card">
+                    <h3>Net Worth</h3>
+                    <p class="net-worth-amount" id="net-worth">$0.00</p>
+                    <div class="net-worth-breakdown">
+                        <span class="assets">Assets: <span id="total-assets">$0.00</span></span>
+                        <span class="liabilities">Liabilities: <span id="total-liabilities">$0.00</span></span>
+                    </div>
+                </div>
+            </div>
 
             <div class="summary-cards">
                 <div class="card">
@@ -41,12 +55,16 @@
                     <p class="amount" id="net-monthly">$0.00</p>
                 </div>
                 <div class="card">
-                    <h3>Total Debt</h3>
-                    <p class="amount negative" id="total-debt">$0.00</p>
+                    <h3>Cash & Bank</h3>
+                    <p class="amount positive" id="total-cash">$0.00</p>
                 </div>
                 <div class="card">
-                    <h3>Total Savings</h3>
-                    <p class="amount positive" id="total-savings">$0.00</p>
+                    <h3>Retirement (IRA/401k)</h3>
+                    <p class="amount positive" id="total-retirement">$0.00</p>
+                </div>
+                <div class="card">
+                    <h3>Total Debt</h3>
+                    <p class="amount negative" id="total-debt">$0.00</p>
                 </div>
             </div>
 
@@ -61,6 +79,17 @@
                 </div>
             </div>
 
+            <div class="charts-section">
+                <div class="chart-container">
+                    <h3>Account Balances</h3>
+                    <canvas id="accounts-chart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Net Worth Breakdown</h3>
+                    <canvas id="networth-chart"></canvas>
+                </div>
+            </div>
+
             <div class="list-section">
                 <h3>Active Debts</h3>
                 <div id="debts-summary"></div>
@@ -69,6 +98,104 @@
             <div class="list-section">
                 <h3>Savings Goals Progress</h3>
                 <div id="savings-summary"></div>
+            </div>
+        </div>
+
+        <!-- Accounts Tab -->
+        <div id="accounts" class="tab-content">
+            <h2>Account Management</h2>
+            <p class="section-description">Track your bank accounts, credit cards, retirement accounts (IRA, 401k), and investments.</p>
+
+            <div class="form-section">
+                <h3>Add New Account</h3>
+                <form id="account-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Account Name</label>
+                            <input type="text" id="account-name" placeholder="e.g., Chase Checking" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Account Type</label>
+                            <select id="account-type" required></select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Institution/Bank</label>
+                            <input type="text" id="account-institution" placeholder="e.g., Chase, Fidelity, Vanguard">
+                        </div>
+                        <div class="form-group">
+                            <label>Current Balance ($)</label>
+                            <input type="number" id="account-balance" step="0.01" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Interest Rate/APY (%)</label>
+                            <input type="number" id="account-interest" step="0.01" placeholder="Optional">
+                        </div>
+                        <div class="form-group">
+                            <label>Credit Limit (Credit Cards Only)</label>
+                            <input type="number" id="account-credit-limit" step="0.01" placeholder="For credit cards">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Last 4 Digits (Optional)</label>
+                            <input type="text" id="account-last4" maxlength="4" placeholder="e.g., 1234">
+                        </div>
+                        <div class="form-group">
+                            <label>Notes</label>
+                            <input type="text" id="account-notes" placeholder="Optional notes">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Account</button>
+                </form>
+            </div>
+
+            <div class="accounts-overview">
+                <h3>Your Accounts</h3>
+
+                <div class="account-category">
+                    <h4>Bank Accounts</h4>
+                    <div id="bank-accounts-list"></div>
+                </div>
+
+                <div class="account-category">
+                    <h4>Credit Cards</h4>
+                    <div id="credit-cards-list"></div>
+                </div>
+
+                <div class="account-category">
+                    <h4>Retirement Accounts (IRA/401k)</h4>
+                    <div id="retirement-accounts-list"></div>
+                </div>
+
+                <div class="account-category">
+                    <h4>Investment Accounts</h4>
+                    <div id="investment-accounts-list"></div>
+                </div>
+
+                <div class="account-category">
+                    <h4>Other Accounts</h4>
+                    <div id="other-accounts-list"></div>
+                </div>
+            </div>
+
+            <!-- Update Account Balance Modal -->
+            <div id="update-balance-modal" class="modal">
+                <div class="modal-content">
+                    <span class="close">&times;</span>
+                    <h3>Update Account Balance</h3>
+                    <form id="update-balance-form">
+                        <input type="hidden" id="update-account-id">
+                        <div class="form-group">
+                            <label>New Balance ($)</label>
+                            <input type="number" id="update-balance-amount" step="0.01" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Update Balance</button>
+                    </form>
+                </div>
             </div>
         </div>
 
@@ -191,25 +318,35 @@
             <div class="form-section">
                 <h3>Add Debt</h3>
                 <form id="debt-form">
-                    <div class="form-group">
-                        <label>Name</label>
-                        <input type="text" id="debt-name" placeholder="e.g., Credit Card, Student Loan" required>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Name</label>
+                            <input type="text" id="debt-name" placeholder="e.g., Chase Credit Card" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Type</label>
+                            <select id="debt-type" required></select>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label>Principal Amount ($)</label>
-                        <input type="number" id="debt-principal" step="0.01" required>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Principal Amount ($)</label>
+                            <input type="number" id="debt-principal" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Current Balance ($)</label>
+                            <input type="number" id="debt-balance" step="0.01" required>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label>Current Balance ($)</label>
-                        <input type="number" id="debt-balance" step="0.01" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Interest Rate (%)</label>
-                        <input type="number" id="debt-interest" step="0.01" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Minimum Payment ($)</label>
-                        <input type="number" id="debt-payment" step="0.01" required>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Interest Rate (APR %)</label>
+                            <input type="number" id="debt-interest" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Minimum Payment ($)</label>
+                            <input type="number" id="debt-payment" step="0.01" required>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label>Due Date (Day of Month)</label>
@@ -244,6 +381,95 @@
                         </div>
                         <button type="submit" class="btn btn-primary">Record Payment</button>
                     </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Debt Payoff Calculator Tab -->
+        <div id="debt-payoff" class="tab-content">
+            <h2>Debt Payoff Calculator</h2>
+            <p class="section-description">Compare different debt payoff strategies and see how extra payments can accelerate your debt freedom!</p>
+
+            <div class="payoff-calculator">
+                <div class="form-section">
+                    <h3>Calculate Your Payoff Plan</h3>
+                    <form id="payoff-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Payoff Strategy</label>
+                                <select id="payoff-strategy">
+                                    <option value="avalanche">Avalanche (Highest Interest First)</option>
+                                    <option value="snowball">Snowball (Lowest Balance First)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Extra Monthly Payment ($)</label>
+                                <input type="number" id="extra-payment" step="0.01" value="0" min="0">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Calculate Payoff Plan</button>
+                    </form>
+                </div>
+
+                <div class="strategy-comparison">
+                    <div class="strategy-info">
+                        <div class="strategy-card avalanche-card">
+                            <h4>Avalanche Method</h4>
+                            <p>Pay off highest interest rate debt first. <strong>Saves the most money</strong> on interest over time.</p>
+                        </div>
+                        <div class="strategy-card snowball-card">
+                            <h4>Snowball Method</h4>
+                            <p>Pay off smallest balance first. <strong>Quick wins</strong> keep you motivated!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="payoff-results" class="payoff-results" style="display: none;">
+                    <h3>Your Debt Payoff Plan</h3>
+
+                    <div class="payoff-summary">
+                        <div class="summary-item">
+                            <span class="label">Debt-Free Date</span>
+                            <span class="value" id="payoff-date">-</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="label">Total Months</span>
+                            <span class="value" id="payoff-months">-</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="label">Total Interest</span>
+                            <span class="value negative" id="payoff-interest">-</span>
+                        </div>
+                        <div class="summary-item highlight">
+                            <span class="label">Interest Saved</span>
+                            <span class="value positive" id="interest-saved">-</span>
+                        </div>
+                        <div class="summary-item highlight">
+                            <span class="label">Months Saved</span>
+                            <span class="value positive" id="months-saved">-</span>
+                        </div>
+                    </div>
+
+                    <div class="comparison-section">
+                        <h4>Comparison with Minimum Payments Only</h4>
+                        <div class="comparison-grid">
+                            <div class="comparison-item">
+                                <span class="label">Without Extra Payments</span>
+                                <span class="value" id="min-only-date">-</span>
+                                <span class="sub-value" id="min-only-interest">Interest: -</span>
+                            </div>
+                            <div class="comparison-item your-plan">
+                                <span class="label">Your Plan</span>
+                                <span class="value" id="your-plan-date">-</span>
+                                <span class="sub-value" id="your-plan-interest">Interest: -</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="payoff-schedule">
+                        <h4>Payoff Order</h4>
+                        <div id="payoff-order"></div>
+                    </div>
                 </div>
             </div>
         </div>

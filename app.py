@@ -4,9 +4,10 @@ Budget Tracker Flask Application
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 from datetime import datetime, date
-from models import db, Income, Expense, Debt, DebtPayment, SavingsGoal, SavingsContribution, Budget
+from models import db, Account, AccountTransaction, Income, Expense, Debt, DebtPayment, SavingsGoal, SavingsContribution, Budget
 from sqlalchemy import extract, func
 import os
+import math
 
 app = Flask(__name__)
 CORS(app)
@@ -30,6 +31,300 @@ def index():
     return render_template('index.html')
 
 
+# ========== Account Endpoints ==========
+
+@app.route('/api/accounts', methods=['GET', 'POST'])
+def handle_accounts():
+    """Get all accounts or add new account"""
+    if request.method == 'GET':
+        account_type = request.args.get('type')
+        if account_type:
+            accounts = Account.query.filter_by(account_type=account_type).all()
+        else:
+            accounts = Account.query.all()
+        return jsonify([account.to_dict() for account in accounts])
+
+    elif request.method == 'POST':
+        data = request.json
+        # Determine if it's an asset or liability
+        is_asset = data.get('account_type') not in ['credit_card']
+
+        account = Account(
+            name=data['name'],
+            account_type=data['account_type'],
+            institution=data.get('institution', ''),
+            balance=data.get('balance', 0),
+            credit_limit=data.get('credit_limit'),
+            interest_rate=data.get('interest_rate'),
+            account_number_last4=data.get('account_number_last4'),
+            is_asset=is_asset,
+            notes=data.get('notes', '')
+        )
+        db.session.add(account)
+        db.session.commit()
+        return jsonify(account.to_dict()), 201
+
+
+@app.route('/api/accounts/<int:account_id>', methods=['GET', 'PUT', 'DELETE'])
+def handle_account_item(account_id):
+    """Get, update, or delete specific account"""
+    account = Account.query.get_or_404(account_id)
+
+    if request.method == 'GET':
+        return jsonify(account.to_dict())
+
+    elif request.method == 'PUT':
+        data = request.json
+        account.name = data.get('name', account.name)
+        account.account_type = data.get('account_type', account.account_type)
+        account.institution = data.get('institution', account.institution)
+        account.balance = data.get('balance', account.balance)
+        account.credit_limit = data.get('credit_limit', account.credit_limit)
+        account.interest_rate = data.get('interest_rate', account.interest_rate)
+        account.account_number_last4 = data.get('account_number_last4', account.account_number_last4)
+        account.notes = data.get('notes', account.notes)
+        account.is_asset = data.get('account_type', account.account_type) not in ['credit_card']
+        db.session.commit()
+        return jsonify(account.to_dict())
+
+    elif request.method == 'DELETE':
+        db.session.delete(account)
+        db.session.commit()
+        return '', 204
+
+
+# ========== Account Transaction Endpoints ==========
+
+@app.route('/api/accounts/<int:account_id>/transactions', methods=['GET', 'POST'])
+def handle_account_transactions(account_id):
+    """Get transactions for an account or add new transaction"""
+    account = Account.query.get_or_404(account_id)
+
+    if request.method == 'GET':
+        transactions = AccountTransaction.query.filter_by(account_id=account_id).order_by(AccountTransaction.date.desc()).all()
+        return jsonify([t.to_dict() for t in transactions])
+
+    elif request.method == 'POST':
+        data = request.json
+        transaction = AccountTransaction(
+            account_id=account_id,
+            transaction_type=data['transaction_type'],
+            amount=data['amount'],
+            description=data.get('description', ''),
+            date=datetime.fromisoformat(data['date']).date() if 'date' in data else date.today(),
+            category=data.get('category')
+        )
+
+        # Update account balance
+        if data['transaction_type'] in ['deposit', 'interest', 'dividend']:
+            account.balance += data['amount']
+        elif data['transaction_type'] in ['withdrawal', 'payment']:
+            account.balance -= data['amount']
+
+        db.session.add(transaction)
+        db.session.commit()
+        return jsonify(transaction.to_dict()), 201
+
+
+@app.route('/api/account-types')
+def get_account_types():
+    """Get list of account types"""
+    account_types = [
+        {'value': 'checking', 'label': 'Checking Account', 'icon': 'bank'},
+        {'value': 'savings', 'label': 'Savings Account', 'icon': 'piggy-bank'},
+        {'value': 'credit_card', 'label': 'Credit Card', 'icon': 'credit-card'},
+        {'value': 'ira', 'label': 'IRA (Individual Retirement Account)', 'icon': 'retirement'},
+        {'value': '401k', 'label': '401(k)', 'icon': 'retirement'},
+        {'value': 'investment', 'label': 'Investment/Brokerage', 'icon': 'chart'},
+        {'value': 'hsa', 'label': 'HSA (Health Savings Account)', 'icon': 'health'},
+        {'value': 'money_market', 'label': 'Money Market', 'icon': 'money'},
+        {'value': 'cd', 'label': 'Certificate of Deposit (CD)', 'icon': 'certificate'},
+        {'value': 'other', 'label': 'Other', 'icon': 'other'}
+    ]
+    return jsonify(account_types)
+
+
+# ========== Net Worth Endpoint ==========
+
+@app.route('/api/net-worth')
+def get_net_worth():
+    """Calculate and return net worth"""
+    accounts = Account.query.all()
+    debts = Debt.query.all()
+
+    # Assets
+    total_checking = sum(a.balance for a in accounts if a.account_type == 'checking')
+    total_savings = sum(a.balance for a in accounts if a.account_type == 'savings')
+    total_retirement = sum(a.balance for a in accounts if a.account_type in ['ira', '401k'])
+    total_investments = sum(a.balance for a in accounts if a.account_type == 'investment')
+    total_other_assets = sum(a.balance for a in accounts if a.account_type in ['hsa', 'money_market', 'cd', 'other'])
+
+    # Liabilities
+    total_credit_card_balance = sum(a.balance for a in accounts if a.account_type == 'credit_card')
+    total_debt = sum(d.current_balance for d in debts)
+
+    total_assets = total_checking + total_savings + total_retirement + total_investments + total_other_assets
+    total_liabilities = total_credit_card_balance + total_debt
+    net_worth = total_assets - total_liabilities
+
+    return jsonify({
+        'net_worth': round(net_worth, 2),
+        'total_assets': round(total_assets, 2),
+        'total_liabilities': round(total_liabilities, 2),
+        'breakdown': {
+            'assets': {
+                'checking': round(total_checking, 2),
+                'savings': round(total_savings, 2),
+                'retirement': round(total_retirement, 2),
+                'investments': round(total_investments, 2),
+                'other': round(total_other_assets, 2)
+            },
+            'liabilities': {
+                'credit_cards': round(total_credit_card_balance, 2),
+                'debts': round(total_debt, 2)
+            }
+        },
+        'accounts': [a.to_dict() for a in accounts]
+    })
+
+
+# ========== Debt Payoff Calculator Endpoints ==========
+
+@app.route('/api/debt-payoff/calculate', methods=['POST'])
+def calculate_debt_payoff():
+    """Calculate debt payoff schedule using different strategies"""
+    data = request.json
+    strategy = data.get('strategy', 'avalanche')  # avalanche, snowball, or custom
+    extra_payment = data.get('extra_payment', 0)
+
+    debts = Debt.query.filter(Debt.current_balance > 0).all()
+
+    if not debts:
+        return jsonify({'error': 'No active debts found', 'schedules': []})
+
+    # Prepare debt data
+    debt_list = []
+    for debt in debts:
+        debt_list.append({
+            'id': debt.id,
+            'name': debt.name,
+            'balance': debt.current_balance,
+            'rate': debt.interest_rate / 100 / 12,  # Monthly rate
+            'minimum': debt.minimum_payment,
+            'original_balance': debt.current_balance
+        })
+
+    # Sort based on strategy
+    if strategy == 'avalanche':
+        # Highest interest rate first
+        debt_list.sort(key=lambda x: x['rate'], reverse=True)
+    elif strategy == 'snowball':
+        # Lowest balance first
+        debt_list.sort(key=lambda x: x['balance'])
+
+    # Calculate payoff schedule
+    schedule = calculate_payoff_schedule(debt_list, extra_payment)
+
+    # Calculate totals
+    total_interest = sum(s['total_interest'] for s in schedule)
+    total_paid = sum(s['total_paid'] for s in schedule)
+    payoff_months = max(s['payoff_month'] for s in schedule) if schedule else 0
+
+    # Calculate minimum-only payoff for comparison
+    min_only_schedule = calculate_payoff_schedule(
+        [{'id': d['id'], 'name': d['name'], 'balance': d['original_balance'],
+          'rate': d['rate'], 'minimum': d['minimum'], 'original_balance': d['original_balance']}
+         for d in debt_list],
+        0
+    )
+    min_only_interest = sum(s['total_interest'] for s in min_only_schedule)
+    min_only_months = max(s['payoff_month'] for s in min_only_schedule) if min_only_schedule else 0
+
+    return jsonify({
+        'strategy': strategy,
+        'extra_payment': extra_payment,
+        'schedule': schedule,
+        'summary': {
+            'total_interest': round(total_interest, 2),
+            'total_paid': round(total_paid, 2),
+            'payoff_months': payoff_months,
+            'payoff_date': get_future_date(payoff_months),
+            'interest_saved': round(min_only_interest - total_interest, 2),
+            'months_saved': min_only_months - payoff_months
+        },
+        'minimum_only': {
+            'total_interest': round(min_only_interest, 2),
+            'payoff_months': min_only_months,
+            'payoff_date': get_future_date(min_only_months)
+        }
+    })
+
+
+def calculate_payoff_schedule(debts, extra_payment):
+    """Calculate month-by-month payoff schedule"""
+    schedule = []
+
+    for i, debt in enumerate(debts):
+        balance = debt['balance']
+        rate = debt['rate']
+        minimum = debt['minimum']
+        total_interest = 0
+        total_paid = 0
+        month = 0
+        monthly_breakdown = []
+
+        while balance > 0.01 and month < 600:  # Cap at 50 years
+            month += 1
+
+            # Calculate interest for this month
+            interest = balance * rate
+            total_interest += interest
+            balance += interest
+
+            # Calculate payment (minimum + extra for priority debt)
+            payment = minimum
+            if i == 0:  # Priority debt gets extra payment
+                payment += extra_payment
+
+            # Don't overpay
+            if payment > balance:
+                payment = balance
+
+            balance -= payment
+            total_paid += payment
+
+            monthly_breakdown.append({
+                'month': month,
+                'payment': round(payment, 2),
+                'interest': round(interest, 2),
+                'principal': round(payment - interest, 2),
+                'balance': round(max(0, balance), 2)
+            })
+
+        # After this debt is paid off, add the freed up minimum to extra_payment
+        if balance <= 0.01:
+            extra_payment += minimum
+
+        schedule.append({
+            'debt_id': debt['id'],
+            'debt_name': debt['name'],
+            'starting_balance': debt['original_balance'],
+            'total_interest': round(total_interest, 2),
+            'total_paid': round(total_paid, 2),
+            'payoff_month': month,
+            'monthly_breakdown': monthly_breakdown
+        })
+
+    return schedule
+
+
+def get_future_date(months_from_now):
+    """Get date string for N months in the future"""
+    from dateutil.relativedelta import relativedelta
+    future_date = date.today() + relativedelta(months=months_from_now)
+    return future_date.strftime('%B %Y')
+
+
 # ========== Income Endpoints ==========
 
 @app.route('/api/income', methods=['GET', 'POST'])
@@ -45,9 +340,17 @@ def handle_income():
             amount=data['amount'],
             source=data['source'],
             date=datetime.fromisoformat(data['date']).date() if 'date' in data else date.today(),
-            description=data.get('description', '')
+            description=data.get('description', ''),
+            account_id=data.get('account_id')
         )
         db.session.add(income)
+
+        # If linked to an account, update balance
+        if data.get('account_id'):
+            account = Account.query.get(data['account_id'])
+            if account:
+                account.balance += data['amount']
+
         db.session.commit()
         return jsonify(income.to_dict()), 201
 
@@ -91,9 +394,17 @@ def handle_expenses():
             amount=data['amount'],
             category=data['category'],
             date=datetime.fromisoformat(data['date']).date() if 'date' in data else date.today(),
-            description=data.get('description', '')
+            description=data.get('description', ''),
+            account_id=data.get('account_id')
         )
         db.session.add(expense)
+
+        # If linked to an account, update balance
+        if data.get('account_id'):
+            account = Account.query.get(data['account_id'])
+            if account:
+                account.balance -= data['amount']
+
         db.session.commit()
         return jsonify(expense.to_dict()), 201
 
@@ -135,6 +446,7 @@ def handle_debts():
         data = request.json
         debt = Debt(
             name=data['name'],
+            debt_type=data.get('debt_type', 'other'),
             principal=data['principal'],
             current_balance=data.get('current_balance', data['principal']),
             interest_rate=data['interest_rate'],
@@ -157,6 +469,7 @@ def handle_debt_item(debt_id):
     elif request.method == 'PUT':
         data = request.json
         debt.name = data.get('name', debt.name)
+        debt.debt_type = data.get('debt_type', debt.debt_type)
         debt.principal = data.get('principal', debt.principal)
         debt.current_balance = data.get('current_balance', debt.current_balance)
         debt.interest_rate = data.get('interest_rate', debt.interest_rate)
@@ -368,6 +681,18 @@ def dashboard():
     savings_goals = SavingsGoal.query.all()
     total_savings = sum(goal.current_amount for goal in savings_goals)
 
+    # Account totals
+    accounts = Account.query.all()
+    total_cash = sum(a.balance for a in accounts if a.account_type in ['checking', 'savings'])
+    total_retirement = sum(a.balance for a in accounts if a.account_type in ['ira', '401k'])
+    total_investments = sum(a.balance for a in accounts if a.account_type == 'investment')
+    total_credit_balance = sum(a.balance for a in accounts if a.account_type == 'credit_card')
+
+    # Net worth
+    total_assets = sum(a.balance for a in accounts if a.is_asset)
+    total_liabilities = total_credit_balance + total_debt
+    net_worth = total_assets - total_liabilities
+
     # Budget comparison
     budgets = Budget.query.filter_by(month=current_month, year=current_year).all()
     budget_comparison = []
@@ -395,7 +720,13 @@ def dashboard():
         'debts': [debt.to_dict() for debt in debts],
         'total_savings': round(total_savings, 2),
         'savings_goals': [goal.to_dict() for goal in savings_goals],
-        'budget_comparison': budget_comparison
+        'budget_comparison': budget_comparison,
+        'net_worth': round(net_worth, 2),
+        'total_cash': round(total_cash, 2),
+        'total_retirement': round(total_retirement, 2),
+        'total_investments': round(total_investments, 2),
+        'total_credit_balance': round(total_credit_balance, 2),
+        'accounts': [a.to_dict() for a in accounts]
     })
 
 
@@ -409,6 +740,21 @@ def get_categories():
         'Debt Payment', 'Other'
     ]
     return jsonify(categories)
+
+
+@app.route('/api/debt-types')
+def get_debt_types():
+    """Get list of debt types"""
+    debt_types = [
+        {'value': 'credit_card', 'label': 'Credit Card'},
+        {'value': 'student_loan', 'label': 'Student Loan'},
+        {'value': 'mortgage', 'label': 'Mortgage'},
+        {'value': 'auto_loan', 'label': 'Auto Loan'},
+        {'value': 'personal_loan', 'label': 'Personal Loan'},
+        {'value': 'medical', 'label': 'Medical Debt'},
+        {'value': 'other', 'label': 'Other'}
+    ]
+    return jsonify(debt_types)
 
 
 if __name__ == '__main__':

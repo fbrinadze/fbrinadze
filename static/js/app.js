@@ -18,6 +18,35 @@ function getTodayDate() {
     return new Date().toISOString().split('T')[0];
 }
 
+function getAccountTypeLabel(type) {
+    const labels = {
+        'checking': 'Checking',
+        'savings': 'Savings',
+        'credit_card': 'Credit Card',
+        'ira': 'IRA',
+        '401k': '401(k)',
+        'investment': 'Investment',
+        'hsa': 'HSA',
+        'money_market': 'Money Market',
+        'cd': 'CD',
+        'other': 'Other'
+    };
+    return labels[type] || type;
+}
+
+function getDebtTypeLabel(type) {
+    const labels = {
+        'credit_card': 'Credit Card',
+        'student_loan': 'Student Loan',
+        'mortgage': 'Mortgage',
+        'auto_loan': 'Auto Loan',
+        'personal_loan': 'Personal Loan',
+        'medical': 'Medical',
+        'other': 'Other'
+    };
+    return labels[type] || type;
+}
+
 // Tab Navigation
 function showTab(tabName) {
     // Hide all tabs
@@ -35,6 +64,8 @@ function showTab(tabName) {
     // Load data for the tab
     if (tabName === 'dashboard') {
         loadDashboard();
+    } else if (tabName === 'accounts') {
+        loadAccounts();
     } else if (tabName === 'income') {
         loadIncome();
     } else if (tabName === 'expenses') {
@@ -43,6 +74,8 @@ function showTab(tabName) {
         loadBudgets();
     } else if (tabName === 'debts') {
         loadDebts();
+    } else if (tabName === 'debt-payoff') {
+        // Nothing to preload
     } else if (tabName === 'savings') {
         loadSavingsGoals();
     }
@@ -60,8 +93,10 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('budget-month').value = now.getMonth() + 1;
     document.getElementById('budget-year').value = now.getFullYear();
 
-    // Load categories
+    // Load categories and account types
     loadCategories();
+    loadAccountTypes();
+    loadDebtTypes();
 
     // Load initial dashboard
     loadDashboard();
@@ -72,6 +107,34 @@ document.addEventListener('DOMContentLoaded', function() {
     // Setup modal handlers
     setupModalHandlers();
 });
+
+// Load Account Types
+async function loadAccountTypes() {
+    try {
+        const response = await fetch(`${API_BASE}/account-types`);
+        const types = await response.json();
+        const accountType = document.getElementById('account-type');
+        types.forEach(type => {
+            accountType.add(new Option(type.label, type.value));
+        });
+    } catch (error) {
+        console.error('Error loading account types:', error);
+    }
+}
+
+// Load Debt Types
+async function loadDebtTypes() {
+    try {
+        const response = await fetch(`${API_BASE}/debt-types`);
+        const types = await response.json();
+        const debtType = document.getElementById('debt-type');
+        types.forEach(type => {
+            debtType.add(new Option(type.label, type.value));
+        });
+    } catch (error) {
+        console.error('Error loading debt types:', error);
+    }
+}
 
 // Load Categories
 async function loadCategories() {
@@ -97,6 +160,18 @@ async function loadDashboard() {
         const response = await fetch(`${API_BASE}/dashboard`);
         const data = await response.json();
 
+        // Update Net Worth
+        const netWorthEl = document.getElementById('net-worth');
+        netWorthEl.textContent = formatCurrency(data.net_worth);
+        netWorthEl.className = 'net-worth-amount ' + (data.net_worth >= 0 ? 'positive' : 'negative');
+
+        // Calculate total assets and liabilities
+        const totalAssets = (data.total_cash || 0) + (data.total_retirement || 0) + (data.total_investments || 0);
+        const totalLiabilities = (data.total_debt || 0) + (data.total_credit_balance || 0);
+
+        document.getElementById('total-assets').textContent = formatCurrency(totalAssets);
+        document.getElementById('total-liabilities').textContent = formatCurrency(totalLiabilities);
+
         // Update summary cards
         document.getElementById('monthly-income').textContent = formatCurrency(data.monthly_income);
         document.getElementById('monthly-expenses').textContent = formatCurrency(data.monthly_expenses);
@@ -105,12 +180,15 @@ async function loadDashboard() {
         netMonthly.textContent = formatCurrency(data.net_monthly);
         netMonthly.className = 'amount ' + (data.net_monthly >= 0 ? 'positive' : 'negative');
 
+        document.getElementById('total-cash').textContent = formatCurrency(data.total_cash || 0);
+        document.getElementById('total-retirement').textContent = formatCurrency(data.total_retirement || 0);
         document.getElementById('total-debt').textContent = formatCurrency(data.total_debt);
-        document.getElementById('total-savings').textContent = formatCurrency(data.total_savings);
 
         // Update charts
         updateExpensesChart(data.expenses_by_category);
         updateBudgetChart(data.budget_comparison);
+        updateAccountsChart(data.accounts);
+        updateNetworthChart(data);
 
         // Update debts summary
         updateDebtsSummary(data.debts);
@@ -122,7 +200,7 @@ async function loadDashboard() {
     }
 }
 
-let expensesChart, budgetChart;
+let expensesChart, budgetChart, accountsChart, networthChart;
 
 function updateExpensesChart(expensesByCategory) {
     const ctx = document.getElementById('expenses-chart').getContext('2d');
@@ -143,7 +221,8 @@ function updateExpensesChart(expensesByCategory) {
                 data: expensesByCategory.map(e => e.amount),
                 backgroundColor: [
                     '#667eea', '#764ba2', '#f093fb', '#4facfe',
-                    '#43e97b', '#fa709a', '#fee140', '#30cfd0'
+                    '#43e97b', '#fa709a', '#fee140', '#30cfd0',
+                    '#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4'
                 ]
             }]
         },
@@ -201,11 +280,117 @@ function updateBudgetChart(budgetComparison) {
     });
 }
 
+function updateAccountsChart(accounts) {
+    const ctx = document.getElementById('accounts-chart').getContext('2d');
+
+    if (accountsChart) {
+        accountsChart.destroy();
+    }
+
+    if (!accounts || accounts.length === 0) {
+        return;
+    }
+
+    // Group accounts by type
+    const typeGroups = {};
+    accounts.forEach(acc => {
+        const type = getAccountTypeLabel(acc.account_type);
+        if (!typeGroups[type]) {
+            typeGroups[type] = 0;
+        }
+        typeGroups[type] += acc.balance;
+    });
+
+    const labels = Object.keys(typeGroups);
+    const data = Object.values(typeGroups);
+
+    accountsChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Balance',
+                data: data,
+                backgroundColor: [
+                    '#28a745', '#20c997', '#17a2b8', '#6f42c1',
+                    '#fd7e14', '#dc3545', '#6610f2', '#e83e8c'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return formatCurrency(value);
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function updateNetworthChart(data) {
+    const ctx = document.getElementById('networth-chart').getContext('2d');
+
+    if (networthChart) {
+        networthChart.destroy();
+    }
+
+    const totalAssets = (data.total_cash || 0) + (data.total_retirement || 0) + (data.total_investments || 0);
+    const totalLiabilities = (data.total_debt || 0) + (data.total_credit_balance || 0);
+
+    if (totalAssets === 0 && totalLiabilities === 0) {
+        return;
+    }
+
+    networthChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Cash & Bank', 'Retirement', 'Investments', 'Debts', 'Credit Cards'],
+            datasets: [{
+                data: [
+                    data.total_cash || 0,
+                    data.total_retirement || 0,
+                    data.total_investments || 0,
+                    data.total_debt || 0,
+                    data.total_credit_balance || 0
+                ],
+                backgroundColor: [
+                    '#28a745',
+                    '#6f42c1',
+                    '#17a2b8',
+                    '#dc3545',
+                    '#fd7e14'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+
 function updateDebtsSummary(debts) {
     const container = document.getElementById('debts-summary');
 
     if (debts.length === 0) {
-        container.innerHTML = '<div class="empty-state"><p>No active debts</p></div>';
+        container.innerHTML = '<div class="empty-state"><p>No active debts - Great job!</p></div>';
         return;
     }
 
@@ -219,8 +404,8 @@ function updateDebtsSummary(debts) {
                     Min Payment: ${formatCurrency(debt.minimum_payment)}
                 </div>
                 <div class="progress-bar">
-                    <div class="progress-fill" style="width: ${((debt.principal - debt.current_balance) / debt.principal * 100)}%">
-                        ${Math.round((debt.principal - debt.current_balance) / debt.principal * 100)}%
+                    <div class="progress-fill" style="width: ${Math.max(0, Math.min(100, (debt.principal - debt.current_balance) / debt.principal * 100))}%">
+                        ${Math.round((debt.principal - debt.current_balance) / debt.principal * 100)}% paid
                     </div>
                 </div>
             </div>
@@ -232,7 +417,7 @@ function updateSavingsSummary(goals) {
     const container = document.getElementById('savings-summary');
 
     if (goals.length === 0) {
-        container.innerHTML = '<div class="empty-state"><p>No savings goals</p></div>';
+        container.innerHTML = '<div class="empty-state"><p>No savings goals - Create one to start saving!</p></div>';
         return;
     }
 
@@ -252,6 +437,99 @@ function updateSavingsSummary(goals) {
             </div>
         </div>
     `).join('');
+}
+
+// Account Functions
+async function loadAccounts() {
+    try {
+        const response = await fetch(`${API_BASE}/accounts`);
+        const accounts = await response.json();
+
+        // Group accounts by type
+        const bankAccounts = accounts.filter(a => ['checking', 'savings', 'money_market'].includes(a.account_type));
+        const creditCards = accounts.filter(a => a.account_type === 'credit_card');
+        const retirementAccounts = accounts.filter(a => ['ira', '401k'].includes(a.account_type));
+        const investmentAccounts = accounts.filter(a => a.account_type === 'investment');
+        const otherAccounts = accounts.filter(a => ['hsa', 'cd', 'other'].includes(a.account_type));
+
+        renderAccountList('bank-accounts-list', bankAccounts, 'No bank accounts added');
+        renderAccountList('credit-cards-list', creditCards, 'No credit cards added');
+        renderAccountList('retirement-accounts-list', retirementAccounts, 'No retirement accounts added');
+        renderAccountList('investment-accounts-list', investmentAccounts, 'No investment accounts added');
+        renderAccountList('other-accounts-list', otherAccounts, 'No other accounts added');
+    } catch (error) {
+        console.error('Error loading accounts:', error);
+    }
+}
+
+function renderAccountList(containerId, accounts, emptyMessage) {
+    const container = document.getElementById(containerId);
+
+    if (accounts.length === 0) {
+        container.innerHTML = `<div class="empty-state"><p>${emptyMessage}</p></div>`;
+        return;
+    }
+
+    container.innerHTML = accounts.map(account => {
+        const isCreditCard = account.account_type === 'credit_card';
+        let utilizationHtml = '';
+
+        if (isCreditCard && account.credit_limit) {
+            const utilization = (account.balance / account.credit_limit * 100).toFixed(1);
+            const utilizationClass = utilization > 30 ? (utilization > 50 ? 'danger' : 'warning') : 'safe';
+            utilizationHtml = `
+                <div class="credit-utilization">
+                    <span>Utilization: ${utilization}%</span>
+                    <div class="utilization-bar">
+                        <div class="utilization-fill ${utilizationClass}" style="width: ${Math.min(100, utilization)}%"></div>
+                    </div>
+                </div>
+            `;
+        }
+
+        return `
+            <div class="account-item list-item">
+                <div class="list-item-content">
+                    <div class="list-item-title">
+                        ${account.name}
+                        ${account.account_number_last4 ? `<span class="account-last4">****${account.account_number_last4}</span>` : ''}
+                    </div>
+                    <div class="list-item-details">
+                        ${account.institution ? account.institution + ' | ' : ''}
+                        ${getAccountTypeLabel(account.account_type)}
+                        ${account.interest_rate ? ' | ' + account.interest_rate + '% APY' : ''}
+                        ${isCreditCard && account.credit_limit ? ' | Limit: ' + formatCurrency(account.credit_limit) : ''}
+                    </div>
+                    ${utilizationHtml}
+                    <div class="account-balance ${isCreditCard ? 'negative' : 'positive'}">
+                        ${formatCurrency(account.balance)}
+                    </div>
+                </div>
+                <div class="list-item-actions">
+                    <button class="btn btn-secondary" onclick="showUpdateBalanceModal(${account.id}, ${account.balance})">Update</button>
+                    <button class="btn btn-danger" onclick="deleteAccount(${account.id})">Delete</button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+async function deleteAccount(id) {
+    if (!confirm('Are you sure you want to delete this account?')) return;
+
+    try {
+        await fetch(`${API_BASE}/accounts/${id}`, { method: 'DELETE' });
+        loadAccounts();
+        loadDashboard();
+    } catch (error) {
+        console.error('Error deleting account:', error);
+    }
+}
+
+function showUpdateBalanceModal(accountId, currentBalance) {
+    document.getElementById('update-account-id').value = accountId;
+    document.getElementById('update-balance-amount').value = currentBalance;
+    document.getElementById('update-balance-modal').classList.add('active');
 }
 
 // Income Functions
@@ -395,7 +673,7 @@ async function loadDebts() {
         const container = document.getElementById('debt-list');
 
         if (debts.length === 0) {
-            container.innerHTML = '<div class="empty-state"><p>No debts recorded</p></div>';
+            container.innerHTML = '<div class="empty-state"><p>No debts recorded - Congratulations!</p></div>';
             return;
         }
 
@@ -404,7 +682,7 @@ async function loadDebts() {
             return `
                 <div class="list-item">
                     <div class="list-item-content">
-                        <div class="list-item-title">${debt.name}</div>
+                        <div class="list-item-title">${debt.name} <span class="debt-type-badge">${getDebtTypeLabel(debt.debt_type)}</span></div>
                         <div class="list-item-details">
                             Principal: ${formatCurrency(debt.principal)} |
                             Balance: ${formatCurrency(debt.current_balance)} |
@@ -441,6 +719,63 @@ async function deleteDebt(id) {
         loadDashboard();
     } catch (error) {
         console.error('Error deleting debt:', error);
+    }
+}
+
+// Debt Payoff Calculator Functions
+async function calculateDebtPayoff() {
+    const strategy = document.getElementById('payoff-strategy').value;
+    const extraPayment = parseFloat(document.getElementById('extra-payment').value) || 0;
+
+    try {
+        const response = await fetch(`${API_BASE}/debt-payoff/calculate`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ strategy, extra_payment: extraPayment })
+        });
+
+        const data = await response.json();
+
+        if (data.error) {
+            alert(data.error);
+            return;
+        }
+
+        // Show results section
+        document.getElementById('payoff-results').style.display = 'block';
+
+        // Update summary
+        document.getElementById('payoff-date').textContent = data.summary.payoff_date;
+        document.getElementById('payoff-months').textContent = data.summary.payoff_months + ' months';
+        document.getElementById('payoff-interest').textContent = formatCurrency(data.summary.total_interest);
+        document.getElementById('interest-saved').textContent = formatCurrency(data.summary.interest_saved);
+        document.getElementById('months-saved').textContent = data.summary.months_saved + ' months';
+
+        // Update comparison
+        document.getElementById('min-only-date').textContent = data.minimum_only.payoff_date;
+        document.getElementById('min-only-interest').textContent = 'Interest: ' + formatCurrency(data.minimum_only.total_interest);
+        document.getElementById('your-plan-date').textContent = data.summary.payoff_date;
+        document.getElementById('your-plan-interest').textContent = 'Interest: ' + formatCurrency(data.summary.total_interest);
+
+        // Update payoff order
+        const orderContainer = document.getElementById('payoff-order');
+        orderContainer.innerHTML = data.schedule.map((item, index) => `
+            <div class="payoff-item">
+                <div class="payoff-order-number">${index + 1}</div>
+                <div class="payoff-item-content">
+                    <div class="payoff-item-name">${item.debt_name}</div>
+                    <div class="payoff-item-details">
+                        Starting Balance: ${formatCurrency(item.starting_balance)} |
+                        Total Interest: ${formatCurrency(item.total_interest)} |
+                        Paid off in ${item.payoff_month} months
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+    } catch (error) {
+        console.error('Error calculating payoff:', error);
+        alert('Error calculating payoff plan. Make sure you have debts added.');
     }
 }
 
@@ -500,11 +835,13 @@ function setupModalHandlers() {
     // Payment Modal
     const paymentModal = document.getElementById('payment-modal');
     const contributionModal = document.getElementById('contribution-modal');
+    const updateBalanceModal = document.getElementById('update-balance-modal');
 
     document.querySelectorAll('.close').forEach(closeBtn => {
         closeBtn.onclick = function() {
             paymentModal.classList.remove('active');
             contributionModal.classList.remove('active');
+            updateBalanceModal.classList.remove('active');
         };
     });
 
@@ -514,6 +851,9 @@ function setupModalHandlers() {
         }
         if (event.target === contributionModal) {
             contributionModal.classList.remove('active');
+        }
+        if (event.target === updateBalanceModal) {
+            updateBalanceModal.classList.remove('active');
         }
     };
 }
@@ -532,6 +872,54 @@ function showContributionModal(goalId) {
 
 // Form Handlers
 function setupFormHandlers() {
+    // Account Form
+    document.getElementById('account-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const data = {
+            name: document.getElementById('account-name').value,
+            account_type: document.getElementById('account-type').value,
+            institution: document.getElementById('account-institution').value,
+            balance: parseFloat(document.getElementById('account-balance').value),
+            interest_rate: document.getElementById('account-interest').value ? parseFloat(document.getElementById('account-interest').value) : null,
+            credit_limit: document.getElementById('account-credit-limit').value ? parseFloat(document.getElementById('account-credit-limit').value) : null,
+            account_number_last4: document.getElementById('account-last4').value,
+            notes: document.getElementById('account-notes').value
+        };
+
+        try {
+            await fetch(`${API_BASE}/accounts`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            e.target.reset();
+            loadAccounts();
+            loadDashboard();
+        } catch (error) {
+            console.error('Error adding account:', error);
+        }
+    });
+
+    // Update Balance Form
+    document.getElementById('update-balance-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const accountId = document.getElementById('update-account-id').value;
+        const newBalance = parseFloat(document.getElementById('update-balance-amount').value);
+
+        try {
+            await fetch(`${API_BASE}/accounts/${accountId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ balance: newBalance })
+            });
+            document.getElementById('update-balance-modal').classList.remove('active');
+            loadAccounts();
+            loadDashboard();
+        } catch (error) {
+            console.error('Error updating balance:', error);
+        }
+    });
+
     // Income Form
     document.getElementById('income-form').addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -615,6 +1003,7 @@ function setupFormHandlers() {
         const principal = parseFloat(document.getElementById('debt-principal').value);
         const data = {
             name: document.getElementById('debt-name').value,
+            debt_type: document.getElementById('debt-type').value,
             principal: principal,
             current_balance: parseFloat(document.getElementById('debt-balance').value),
             interest_rate: parseFloat(document.getElementById('debt-interest').value),
@@ -659,6 +1048,12 @@ function setupFormHandlers() {
         } catch (error) {
             console.error('Error recording payment:', error);
         }
+    });
+
+    // Debt Payoff Form
+    document.getElementById('payoff-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await calculateDebtPayoff();
     });
 
     // Savings Goal Form
