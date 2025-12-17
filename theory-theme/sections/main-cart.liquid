@@ -1,0 +1,147 @@
+<section class="main-cart" data-section-id="{{ section.id }}" data-section-type="main-cart">
+  <div class="main-cart__container">
+    <h1 class="main-cart__title">Shopping Cart</h1>
+
+    {%- if cart.item_count > 0 -%}
+      <form action="{{ routes.cart_url }}" method="post" class="main-cart__form">
+        <div class="main-cart__items">
+          <div class="main-cart__header">
+            <span class="main-cart__header-product">Product</span>
+            <span class="main-cart__header-quantity">Quantity</span>
+            <span class="main-cart__header-total">Total</span>
+          </div>
+
+          {%- for item in cart.items -%}
+            <div class="main-cart__item" data-cart-item="{{ item.key }}">
+              <div class="main-cart__item-image">
+                {%- if item.image -%}
+                  <a href="{{ item.url }}">
+                    {{ item.image | image_url: width: 200 | image_tag:
+                      loading: 'lazy',
+                      class: 'main-cart__item-img',
+                      widths: '100, 150, 200'
+                    }}
+                  </a>
+                {%- endif -%}
+              </div>
+
+              <div class="main-cart__item-details">
+                <a href="{{ item.url }}" class="main-cart__item-title">{{ item.product.title }}</a>
+                {%- if section.settings.show_vendor and item.product.vendor != blank -%}
+                  <p class="main-cart__item-vendor">{{ item.product.vendor }}</p>
+                {%- endif -%}
+                {%- unless item.product.has_only_default_variant -%}
+                  <p class="main-cart__item-variant">{{ item.variant.title }}</p>
+                {%- endunless -%}
+                <p class="main-cart__item-price">{{ item.original_price | money }}</p>
+
+                {%- for property in item.properties -%}
+                  {%- unless property.last == blank -%}
+                    <p class="main-cart__item-property">
+                      <span>{{ property.first }}:</span>
+                      <span>{{ property.last }}</span>
+                    </p>
+                  {%- endunless -%}
+                {%- endfor -%}
+              </div>
+
+              <div class="main-cart__item-quantity">
+                <div class="main-cart__quantity-wrapper">
+                  <button type="button" class="main-cart__quantity-button" data-quantity-minus aria-label="Decrease quantity">
+                    <svg width="12" height="2" viewBox="0 0 12 2" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M1 1H11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                  </button>
+                  <input
+                    type="number"
+                    name="updates[]"
+                    value="{{ item.quantity }}"
+                    min="0"
+                    class="main-cart__quantity-input"
+                    aria-label="Quantity for {{ item.product.title }}"
+                    data-quantity-input
+                  >
+                  <button type="button" class="main-cart__quantity-button" data-quantity-plus aria-label="Increase quantity">
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M6 1V11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                      <path d="M1 6H11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                  </button>
+                </div>
+                <button type="button" class="main-cart__item-remove" data-cart-remove aria-label="Remove {{ item.product.title }}">
+                  Remove
+                </button>
+              </div>
+
+              <div class="main-cart__item-total">
+                <span class="main-cart__item-total-price">{{ item.final_line_price | money }}</span>
+                {%- if item.original_line_price != item.final_line_price -%}
+                  <span class="main-cart__item-original-price">{{ item.original_line_price | money }}</span>
+                {%- endif -%}
+              </div>
+            </div>
+          {%- endfor -%}
+        </div>
+
+        <div class="main-cart__footer">
+          {%- for block in section.blocks -%}
+            {%- case block.type -%}
+              {%- when 'subtotal' -%}
+                <div class="main-cart__subtotal" {{ block.shopify_attributes }}>
+                  <div class="main-cart__subtotal-row">
+                    <span>Subtotal</span>
+                    <span class="main-cart__subtotal-price">{{ cart.total_price | money }}</span>
+                  </div>
+                  <p class="main-cart__subtotal-note">Shipping and taxes calculated at checkout.</p>
+                </div>
+
+              {%- when 'buttons' -%}
+                <div class="main-cart__buttons" {{ block.shopify_attributes }}>
+                  <button type="submit" name="update" class="button button--secondary main-cart__update">
+                    Update Cart
+                  </button>
+                  <button type="submit" name="checkout" class="button button--primary main-cart__checkout">
+                    Checkout
+                  </button>
+                </div>
+            {%- endcase -%}
+          {%- endfor -%}
+        </div>
+      </form>
+    {%- else -%}
+      <div class="main-cart__empty">
+        <p class="main-cart__empty-text">Your cart is currently empty.</p>
+        <a href="{{ routes.all_products_collection_url }}" class="button button--primary">
+          Continue Shopping
+        </a>
+      </div>
+    {%- endif -%}
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Cart",
+  "class": "section-main-cart",
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "show_vendor",
+      "label": "Show vendor",
+      "default": false
+    }
+  ],
+  "blocks": [
+    {
+      "type": "subtotal",
+      "name": "Subtotal",
+      "limit": 1
+    },
+    {
+      "type": "buttons",
+      "name": "Checkout buttons",
+      "limit": 1
+    }
+  ]
+}
+{% endschema %}

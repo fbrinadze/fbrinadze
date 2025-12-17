@@ -1,0 +1,192 @@
+<header class="header" data-section-id="{{ section.id }}" data-section-type="header">
+  <div class="header__container">
+    {%- if section.settings.logo != blank -%}
+      <a href="{{ routes.root_url }}" class="header__logo">
+        {%- assign logo_height = section.settings.logo_width | divided_by: section.settings.logo.aspect_ratio -%}
+        {{ section.settings.logo | image_url: width: section.settings.logo_width | image_tag:
+          class: 'header__logo-image',
+          widths: '50, 100, 150, 200, 250, 300, 400',
+          width: section.settings.logo_width,
+          height: logo_height,
+          alt: shop.name
+        }}
+      </a>
+    {%- else -%}
+      <a href="{{ routes.root_url }}" class="header__logo header__logo--text">
+        {{ shop.name }}
+      </a>
+    {%- endif -%}
+
+    <nav class="header__nav" role="navigation" aria-label="Main navigation">
+      {%- if section.settings.menu != blank -%}
+        <ul class="header__nav-list">
+          {%- for link in section.settings.menu.links -%}
+            <li class="header__nav-item{% if link.links.size > 0 %} has-dropdown{% endif %}">
+              {%- if link.links.size > 0 -%}
+                <button class="header__nav-link header__nav-link--dropdown" aria-expanded="false" aria-controls="dropdown-{{ forloop.index }}">
+                  {{ link.title }}
+                  <svg class="icon icon-chevron-down" width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+                <div class="header__dropdown" id="dropdown-{{ forloop.index }}">
+                  <ul class="header__dropdown-list">
+                    {%- for child_link in link.links -%}
+                      <li class="header__dropdown-item">
+                        <a href="{{ child_link.url }}" class="header__dropdown-link">
+                          {{ child_link.title }}
+                        </a>
+                      </li>
+                    {%- endfor -%}
+                  </ul>
+                </div>
+              {%- else -%}
+                <a href="{{ link.url }}" class="header__nav-link">
+                  {{ link.title }}
+                </a>
+              {%- endif -%}
+            </li>
+          {%- endfor -%}
+        </ul>
+      {%- endif -%}
+    </nav>
+
+    <div class="header__icons">
+      {%- if section.settings.show_search -%}
+        <button class="header__icon header__icon--search" aria-label="Search" data-search-toggle>
+          <svg class="icon icon-search" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M9 17C13.4183 17 17 13.4183 17 9C17 4.58172 13.4183 1 9 1C4.58172 1 1 4.58172 1 9C1 13.4183 4.58172 17 9 17Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M19 19L14.65 14.65" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      {%- endif -%}
+
+      {%- if section.settings.show_account and shop.customer_accounts_enabled -%}
+        <a href="{%- if customer -%}{{ routes.account_url }}{%- else -%}{{ routes.account_login_url }}{%- endif -%}" class="header__icon header__icon--account" aria-label="Account">
+          <svg class="icon icon-account" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M16.6666 17.5V15.8333C16.6666 14.9493 16.3154 14.1014 15.6903 13.4763C15.0652 12.8512 14.2173 12.5 13.3333 12.5H6.66659C5.78253 12.5 4.93468 12.8512 4.30956 13.4763C3.68444 14.1014 3.33325 14.9493 3.33325 15.8333V17.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M10.0001 9.16667C11.841 9.16667 13.3334 7.67428 13.3334 5.83333C13.3334 3.99238 11.841 2.5 10.0001 2.5C8.15913 2.5 6.66675 3.99238 6.66675 5.83333C6.66675 7.67428 8.15913 9.16667 10.0001 9.16667Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </a>
+      {%- endif -%}
+
+      <a href="{{ routes.cart_url }}" class="header__icon header__icon--cart" aria-label="Cart" data-cart-toggle>
+        <svg class="icon icon-cart" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M5 1.66667L2.5 5V16.6667C2.5 17.1087 2.67559 17.5326 2.98816 17.8452C3.30072 18.1577 3.72464 18.3333 4.16667 18.3333H15.8333C16.2754 18.3333 16.6993 18.1577 17.0118 17.8452C17.3244 17.5326 17.5 17.1087 17.5 16.6667V5L15 1.66667H5Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M2.5 5H17.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M13.3334 8.33333C13.3334 9.21739 12.9822 10.0652 12.357 10.6904C11.7319 11.3155 10.8841 11.6667 10.0001 11.6667C9.11603 11.6667 8.26818 11.3155 7.64306 10.6904C7.01794 10.0652 6.66675 9.21739 6.66675 8.33333" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span class="header__cart-count" data-cart-count>{{ cart.item_count }}</span>
+      </a>
+
+      <button class="header__icon header__icon--menu mobile-only" aria-label="Menu" data-menu-toggle>
+        <svg class="icon icon-menu" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M2.5 5H17.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M2.5 10H17.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M2.5 15H17.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Mobile Navigation -->
+  <div class="header__mobile-nav" data-mobile-nav>
+    <div class="header__mobile-nav-header">
+      <button class="header__mobile-nav-close" aria-label="Close menu" data-menu-close>
+        <svg class="icon icon-close" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M15 5L5 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M5 5L15 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+    <nav class="header__mobile-nav-content">
+      {%- if section.settings.menu != blank -%}
+        <ul class="header__mobile-nav-list">
+          {%- for link in section.settings.menu.links -%}
+            <li class="header__mobile-nav-item{% if link.links.size > 0 %} has-children{% endif %}">
+              {%- if link.links.size > 0 -%}
+                <button class="header__mobile-nav-link" aria-expanded="false" data-mobile-submenu-toggle>
+                  {{ link.title }}
+                  <svg class="icon icon-chevron-right" width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4.5 2.5L8 6L4.5 9.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+                <ul class="header__mobile-submenu">
+                  <li class="header__mobile-submenu-back">
+                    <button data-mobile-submenu-back>
+                      <svg class="icon icon-chevron-left" width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M7.5 9.5L4 6L7.5 2.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                      Back
+                    </button>
+                  </li>
+                  <li class="header__mobile-submenu-title">{{ link.title }}</li>
+                  {%- for child_link in link.links -%}
+                    <li class="header__mobile-submenu-item">
+                      <a href="{{ child_link.url }}" class="header__mobile-submenu-link">
+                        {{ child_link.title }}
+                      </a>
+                    </li>
+                  {%- endfor -%}
+                </ul>
+              {%- else -%}
+                <a href="{{ link.url }}" class="header__mobile-nav-link">
+                  {{ link.title }}
+                </a>
+              {%- endif -%}
+            </li>
+          {%- endfor -%}
+        </ul>
+      {%- endif -%}
+    </nav>
+  </div>
+  <div class="header__mobile-overlay" data-mobile-overlay></div>
+</header>
+
+{% schema %}
+{
+  "name": "Header",
+  "class": "section-header",
+  "settings": [
+    {
+      "type": "image_picker",
+      "id": "logo",
+      "label": "Logo"
+    },
+    {
+      "type": "range",
+      "id": "logo_width",
+      "label": "Logo width",
+      "min": 50,
+      "max": 300,
+      "step": 10,
+      "default": 120,
+      "unit": "px"
+    },
+    {
+      "type": "link_list",
+      "id": "menu",
+      "label": "Menu",
+      "default": "main-menu"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_search",
+      "label": "Show search",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_account",
+      "label": "Show account link",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "sticky_header",
+      "label": "Enable sticky header",
+      "default": true
+    }
+  ]
+}
+{% endschema %}

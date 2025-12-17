@@ -1,0 +1,120 @@
+{%- comment -%}
+  Renders the cart drawer
+
+  Usage:
+  {% render 'cart-drawer' %}
+{%- endcomment -%}
+
+<div class="cart-drawer" data-cart-drawer aria-hidden="true">
+  <div class="cart-drawer__overlay" data-cart-drawer-close></div>
+
+  <div class="cart-drawer__container">
+    <div class="cart-drawer__header">
+      <h2 class="cart-drawer__title">Your Cart (<span data-cart-count>{{ cart.item_count }}</span>)</h2>
+      <button class="cart-drawer__close" data-cart-drawer-close aria-label="Close cart">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M15 5L5 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M5 5L15 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+
+    {%- if settings.cart_show_free_shipping_bar -%}
+      {%- assign free_shipping_threshold = settings.cart_free_shipping_threshold | times: 100 -%}
+      {%- assign remaining = free_shipping_threshold | minus: cart.total_price -%}
+      <div class="cart-drawer__shipping-bar" data-shipping-bar>
+        {%- if remaining > 0 -%}
+          <p class="cart-drawer__shipping-message">
+            Spend <span data-shipping-remaining>{{ remaining | money }}</span> more for free shipping
+          </p>
+          <div class="cart-drawer__shipping-progress">
+            {%- assign progress = cart.total_price | times: 100.0 | divided_by: free_shipping_threshold -%}
+            <div class="cart-drawer__shipping-progress-bar" style="width: {{ progress | at_most: 100 }}%"></div>
+          </div>
+        {%- else -%}
+          <p class="cart-drawer__shipping-message cart-drawer__shipping-message--success">
+            You've unlocked free shipping!
+          </p>
+          <div class="cart-drawer__shipping-progress cart-drawer__shipping-progress--complete">
+            <div class="cart-drawer__shipping-progress-bar" style="width: 100%"></div>
+          </div>
+        {%- endif -%}
+      </div>
+    {%- endif -%}
+
+    <div class="cart-drawer__content" data-cart-drawer-content>
+      {%- if cart.item_count > 0 -%}
+        <div class="cart-drawer__items">
+          {%- for item in cart.items -%}
+            <div class="cart-drawer__item" data-cart-item="{{ item.key }}">
+              <div class="cart-drawer__item-image">
+                {%- if item.image -%}
+                  <a href="{{ item.url }}">
+                    {{ item.image | image_url: width: 150 | image_tag:
+                      loading: 'lazy',
+                      class: 'cart-drawer__item-img',
+                      widths: '75, 100, 150'
+                    }}
+                  </a>
+                {%- endif -%}
+              </div>
+
+              <div class="cart-drawer__item-details">
+                <a href="{{ item.url }}" class="cart-drawer__item-title">{{ item.product.title }}</a>
+                {%- unless item.product.has_only_default_variant -%}
+                  <p class="cart-drawer__item-variant">{{ item.variant.title }}</p>
+                {%- endunless -%}
+                <p class="cart-drawer__item-price">{{ item.original_price | money }}</p>
+
+                <div class="cart-drawer__item-actions">
+                  <div class="cart-drawer__quantity">
+                    <button type="button" class="cart-drawer__quantity-button" data-quantity-change="{{ item.key }}" data-quantity-action="minus" aria-label="Decrease quantity">
+                      <svg width="10" height="2" viewBox="0 0 10 2" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M1 1H9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                      </svg>
+                    </button>
+                    <span class="cart-drawer__quantity-value" data-quantity-value>{{ item.quantity }}</span>
+                    <button type="button" class="cart-drawer__quantity-button" data-quantity-change="{{ item.key }}" data-quantity-action="plus" aria-label="Increase quantity">
+                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M5 1V9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                        <path d="M1 5H9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                      </svg>
+                    </button>
+                  </div>
+                  <button type="button" class="cart-drawer__item-remove" data-cart-remove="{{ item.key }}" aria-label="Remove {{ item.product.title }}">
+                    Remove
+                  </button>
+                </div>
+              </div>
+
+              <div class="cart-drawer__item-total">
+                {{ item.final_line_price | money }}
+              </div>
+            </div>
+          {%- endfor -%}
+        </div>
+      {%- else -%}
+        <div class="cart-drawer__empty">
+          <p>Your cart is empty</p>
+          <a href="{{ routes.all_products_collection_url }}" class="button button--secondary">Continue Shopping</a>
+        </div>
+      {%- endif -%}
+    </div>
+
+    {%- if cart.item_count > 0 -%}
+      <div class="cart-drawer__footer">
+        <div class="cart-drawer__subtotal">
+          <span>Subtotal</span>
+          <span data-cart-total>{{ cart.total_price | money }}</span>
+        </div>
+        <p class="cart-drawer__note">Shipping and taxes calculated at checkout.</p>
+        <a href="{{ routes.cart_url }}" class="button button--secondary cart-drawer__view-cart">View Cart</a>
+        <form action="{{ routes.cart_url }}" method="post">
+          <button type="submit" name="checkout" class="button button--primary cart-drawer__checkout">
+            Checkout
+          </button>
+        </form>
+      </div>
+    {%- endif -%}
+  </div>
+</div>

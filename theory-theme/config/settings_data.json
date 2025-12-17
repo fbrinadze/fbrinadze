@@ -1,0 +1,62 @@
+{
+  "current": {
+    "color_primary": "#000000",
+    "color_secondary": "#FFFFFF",
+    "color_background": "#FFFFFF",
+    "color_text": "#000000",
+    "color_text_light": "#666666",
+    "color_border": "#E5E5E5",
+    "color_accent": "#000000",
+    "color_sale": "#C41E3A",
+    "type_header_font": "helvetica_n4",
+    "type_body_font": "helvetica_n4",
+    "type_body_font_size": 14,
+    "page_width": 1400,
+    "spacing_sections": 40,
+    "cart_type": "drawer",
+    "cart_show_free_shipping_bar": true,
+    "cart_free_shipping_threshold": "150",
+    "predictive_search_enabled": true,
+    "predictive_search_show_products": true,
+    "predictive_search_show_collections": true,
+    "predictive_search_show_pages": false,
+    "currency_show_codes": false,
+    "sections": {
+      "header": {
+        "type": "header",
+        "settings": {
+          "logo_width": 120,
+          "menu": "main-menu",
+          "show_search": true,
+          "show_account": true,
+          "sticky_header": true
+        }
+      },
+      "footer": {
+        "type": "footer",
+        "settings": {
+          "show_newsletter": true,
+          "newsletter_heading": "Join our newsletter",
+          "show_social": true,
+          "show_payment_icons": true
+        }
+      },
+      "announcement-bar": {
+        "type": "announcement-bar",
+        "settings": {
+          "show_announcement": true,
+          "text": "Free shipping on orders over $150",
+          "link": ""
+        }
+      }
+    },
+    "content_for_index": [
+      "hero",
+      "featured-collection",
+      "image-with-text",
+      "collection-list",
+      "featured-product",
+      "newsletter"
+    ]
+  }
+}

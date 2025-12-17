@@ -1,0 +1,137 @@
+<section class="newsletter newsletter--{{ section.settings.color_scheme }}" data-section-id="{{ section.id }}" data-section-type="newsletter">
+  <div class="newsletter__container">
+    <div class="newsletter__content">
+      {%- if section.settings.heading != blank -%}
+        <h2 class="newsletter__heading">{{ section.settings.heading }}</h2>
+      {%- endif -%}
+
+      {%- if section.settings.subheading != blank -%}
+        <p class="newsletter__subheading">{{ section.settings.subheading }}</p>
+      {%- endif -%}
+
+      {%- form 'customer', class: 'newsletter__form' -%}
+        <input type="hidden" name="contact[tags]" value="newsletter">
+        <div class="newsletter__form-wrapper">
+          <div class="newsletter__field">
+            <input
+              type="email"
+              name="contact[email]"
+              id="newsletter-email-{{ section.id }}"
+              class="newsletter__input"
+              placeholder="{{ 'newsletter.placeholder' | t | default: 'Enter your email' }}"
+              required
+              autocomplete="email"
+              aria-label="Email"
+            >
+          </div>
+          <button type="submit" class="newsletter__button button button--primary">
+            {{ section.settings.button_label | default: 'Subscribe' }}
+          </button>
+        </div>
+        {%- if form.posted_successfully? -%}
+          <p class="newsletter__success">{{ 'newsletter.success' | t | default: 'Thanks for subscribing!' }}</p>
+        {%- endif -%}
+        {%- if form.errors -%}
+          <p class="newsletter__error">{{ form.errors.messages['email'] }}</p>
+        {%- endif -%}
+      {%- endform -%}
+
+      {%- if section.settings.show_social -%}
+        <div class="newsletter__social">
+          {%- if settings.social_instagram_link != blank -%}
+            <a href="{{ settings.social_instagram_link }}" class="newsletter__social-link" aria-label="Instagram" target="_blank" rel="noopener">
+              <svg class="icon icon-instagram" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="2" y="2" width="20" height="20" rx="5" stroke="currentColor" stroke-width="1.5"/>
+                <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.5"/>
+                <circle cx="17.5" cy="6.5" r="1.5" fill="currentColor"/>
+              </svg>
+            </a>
+          {%- endif -%}
+          {%- if settings.social_facebook_link != blank -%}
+            <a href="{{ settings.social_facebook_link }}" class="newsletter__social-link" aria-label="Facebook" target="_blank" rel="noopener">
+              <svg class="icon icon-facebook" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M18 2H15C13.6739 2 12.4021 2.52678 11.4645 3.46447C10.5268 4.40215 10 5.67392 10 7V10H7V14H10V22H14V14H17L18 10H14V7C14 6.73478 14.1054 6.48043 14.2929 6.29289C14.4804 6.10536 14.7348 6 15 6H18V2Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </a>
+          {%- endif -%}
+          {%- if settings.social_twitter_link != blank -%}
+            <a href="{{ settings.social_twitter_link }}" class="newsletter__social-link" aria-label="Twitter" target="_blank" rel="noopener">
+              <svg class="icon icon-twitter" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M22 4C22 4 21.3 6.1 20 7.4C21.6 17.4 10.6 24.7 2 19C4.2 19.1 6.4 18.4 8 17C3 15.5 0.5 9.6 3 5C5.2 7.6 8.6 9.1 12 9C11.1 4.8 16 2.4 19 5.2C20.1 5.2 22 4 22 4Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </a>
+          {%- endif -%}
+          {%- if settings.social_pinterest_link != blank -%}
+            <a href="{{ settings.social_pinterest_link }}" class="newsletter__social-link" aria-label="Pinterest" target="_blank" rel="noopener">
+              <svg class="icon icon-pinterest" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M8 18L11 10C11 10 12 6 15 6C18 6 17.5 10 15 12C12.5 14 9.5 13 10 18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
+            </a>
+          {%- endif -%}
+          {%- if settings.social_tiktok_link != blank -%}
+            <a href="{{ settings.social_tiktok_link }}" class="newsletter__social-link" aria-label="TikTok" target="_blank" rel="noopener">
+              <svg class="icon icon-tiktok" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M17 9C18.5 10 20.5 10.4 22 10V7C20.5 7.4 18.5 7 17 6V15C17 18.3 14.3 21 11 21C7.7 21 5 18.3 5 15C5 11.7 7.7 9 11 9V12C9.34 12 8 13.34 8 15C8 16.66 9.34 18 11 18C12.66 18 14 16.66 14 15V2H17V9Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </a>
+          {%- endif -%}
+        </div>
+      {%- endif -%}
+    </div>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Newsletter",
+  "class": "section-newsletter",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Stay Connected"
+    },
+    {
+      "type": "text",
+      "id": "subheading",
+      "label": "Subheading",
+      "default": "Subscribe for exclusive offers, new arrivals, and style inspiration."
+    },
+    {
+      "type": "text",
+      "id": "button_label",
+      "label": "Button label",
+      "default": "Subscribe"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_social",
+      "label": "Show social media icons",
+      "default": true
+    },
+    {
+      "type": "select",
+      "id": "color_scheme",
+      "label": "Color scheme",
+      "options": [
+        {
+          "value": "light",
+          "label": "Light"
+        },
+        {
+          "value": "dark",
+          "label": "Dark"
+        }
+      ],
+      "default": "light"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Newsletter"
+    }
+  ]
+}
+{% endschema %}

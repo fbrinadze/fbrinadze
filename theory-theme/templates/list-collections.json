@@ -1,0 +1,13 @@
+{
+  "sections": {
+    "main": {
+      "type": "main-list-collections",
+      "settings": {
+        "heading": "All Collections",
+        "sort": "alphabetical",
+        "image_ratio": "portrait"
+      }
+    }
+  },
+  "order": ["main"]
+}

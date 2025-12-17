@@ -1,0 +1,92 @@
+{%- comment -%}
+  Renders a product card
+
+  Accepts:
+  - product: {Object} Product Liquid object
+  - show_vendor: {Boolean} Show vendor name (optional, default: false)
+  - show_secondary_image: {Boolean} Show secondary image on hover (optional, default: true)
+  - image_ratio: {String} Image aspect ratio (optional, default: 'portrait')
+
+  Usage:
+  {% render 'product-card', product: product %}
+{%- endcomment -%}
+
+{%- liquid
+  assign show_vendor = show_vendor | default: false
+  assign show_secondary_image = show_secondary_image | default: true
+  assign image_ratio = image_ratio | default: 'portrait'
+-%}
+
+<div class="product-card" data-product-handle="{{ product.handle }}">
+  <a href="{{ product.url }}" class="product-card__link" aria-label="{{ product.title }}">
+    <div class="product-card__media product-card__media--{{ image_ratio }}">
+      {%- if product.featured_media -%}
+        {{ product.featured_media | image_url: width: 600 | image_tag:
+          loading: 'lazy',
+          class: 'product-card__image product-card__image--primary',
+          sizes: '(min-width: 1200px) 25vw, (min-width: 750px) 33vw, 50vw',
+          widths: '165, 360, 535, 600'
+        }}
+
+        {%- if show_secondary_image and product.media[1] != nil -%}
+          {{ product.media[1] | image_url: width: 600 | image_tag:
+            loading: 'lazy',
+            class: 'product-card__image product-card__image--secondary',
+            sizes: '(min-width: 1200px) 25vw, (min-width: 750px) 33vw, 50vw',
+            widths: '165, 360, 535, 600'
+          }}
+        {%- endif -%}
+      {%- else -%}
+        <div class="product-card__placeholder">
+          {{ 'product-1' | placeholder_svg_tag: 'product-card__placeholder-svg' }}
+        </div>
+      {%- endif -%}
+
+      {%- if product.available == false -%}
+        <span class="product-card__badge product-card__badge--sold-out">Sold Out</span>
+      {%- elsif product.compare_at_price > product.price -%}
+        <span class="product-card__badge product-card__badge--sale">Sale</span>
+      {%- endif -%}
+    </div>
+  </a>
+
+  <div class="product-card__info">
+    {%- if show_vendor and product.vendor != blank -%}
+      <p class="product-card__vendor">{{ product.vendor }}</p>
+    {%- endif -%}
+
+    <h3 class="product-card__title">
+      <a href="{{ product.url }}">{{ product.title }}</a>
+    </h3>
+
+    <div class="product-card__price">
+      {%- if product.compare_at_price > product.price -%}
+        <span class="product-card__price-compare">{{ product.compare_at_price | money }}</span>
+      {%- endif -%}
+      <span class="product-card__price-regular{% if product.compare_at_price > product.price %} product-card__price-regular--sale{% endif %}">
+        {{ product.price | money }}
+      </span>
+    </div>
+
+    {%- if product.options_with_values.size > 0 -%}
+      {%- assign color_option = product.options_by_name['Color'] -%}
+      {%- if color_option -%}
+        <div class="product-card__swatches">
+          {%- for value in color_option.values limit: 5 -%}
+            <span class="product-card__swatch" style="background-color: {{ value | handleize }};" title="{{ value }}"></span>
+          {%- endfor -%}
+          {%- if color_option.values.size > 5 -%}
+            <span class="product-card__swatch-more">+{{ color_option.values.size | minus: 5 }}</span>
+          {%- endif -%}
+        </div>
+      {%- endif -%}
+    {%- endif -%}
+  </div>
+
+  <button class="product-card__quick-add" data-quick-add="{{ product.selected_or_first_available_variant.id }}" aria-label="Quick add to cart">
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M10 4V16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M4 10H16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+  </button>
+</div>

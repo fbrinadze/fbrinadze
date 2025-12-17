@@ -1,0 +1,127 @@
+{%- assign product = section.settings.product -%}
+
+<section class="featured-product" data-section-id="{{ section.id }}" data-section-type="featured-product">
+  <div class="featured-product__container">
+    {%- if section.settings.heading != blank -%}
+      <h2 class="featured-product__section-heading">{{ section.settings.heading }}</h2>
+    {%- endif -%}
+
+    <div class="featured-product__wrapper">
+      <div class="featured-product__media">
+        {%- if product != blank -%}
+          {%- if product.featured_media -%}
+            {{ product.featured_media | image_url: width: 1000 | image_tag:
+              loading: 'lazy',
+              class: 'featured-product__image',
+              sizes: '(min-width: 990px) 50vw, 100vw',
+              widths: '375, 550, 750, 1000'
+            }}
+          {%- endif -%}
+        {%- else -%}
+          <div class="featured-product__placeholder">
+            {{ 'product-1' | placeholder_svg_tag: 'featured-product__placeholder-svg' }}
+          </div>
+        {%- endif -%}
+      </div>
+
+      <div class="featured-product__info">
+        {%- if product != blank -%}
+          {%- if section.settings.show_vendor and product.vendor != blank -%}
+            <p class="featured-product__vendor">{{ product.vendor }}</p>
+          {%- endif -%}
+
+          <h3 class="featured-product__title">
+            <a href="{{ product.url }}">{{ product.title }}</a>
+          </h3>
+
+          <div class="featured-product__price">
+            {%- if product.compare_at_price > product.price -%}
+              <span class="featured-product__price-compare">{{ product.compare_at_price | money }}</span>
+            {%- endif -%}
+            <span class="featured-product__price-regular{% if product.compare_at_price > product.price %} featured-product__price-regular--sale{% endif %}">
+              {{ product.price | money }}
+            </span>
+          </div>
+
+          {%- if product.description != blank -%}
+            <div class="featured-product__description">
+              {{ product.description | strip_html | truncate: 200 }}
+            </div>
+          {%- endif -%}
+
+          {%- unless product.has_only_default_variant -%}
+            <div class="featured-product__variants">
+              {%- for option in product.options_with_values -%}
+                <div class="featured-product__option">
+                  <label class="featured-product__option-label">{{ option.name }}</label>
+                  <div class="featured-product__option-values">
+                    {%- for value in option.values -%}
+                      <span class="featured-product__option-value{% if value == option.selected_value %} is-active{% endif %}">
+                        {{ value }}
+                      </span>
+                    {%- endfor -%}
+                  </div>
+                </div>
+              {%- endfor -%}
+            </div>
+          {%- endunless -%}
+
+          <div class="featured-product__actions">
+            <a href="{{ product.url }}" class="button button--primary featured-product__button">
+              View Product
+            </a>
+          </div>
+        {%- else -%}
+          <p class="featured-product__vendor">Brand</p>
+          <h3 class="featured-product__title">Example Product Title</h3>
+          <div class="featured-product__price">
+            <span class="featured-product__price-regular">$99.00</span>
+          </div>
+          <p class="featured-product__description">
+            This is sample product description text. Select a product in the theme editor to display your featured product.
+          </p>
+          <div class="featured-product__actions">
+            <span class="button button--primary featured-product__button">View Product</span>
+          </div>
+        {%- endif -%}
+      </div>
+    </div>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Featured product",
+  "class": "section-featured-product",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Featured"
+    },
+    {
+      "type": "product",
+      "id": "product",
+      "label": "Product"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_vendor",
+      "label": "Show vendor",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "show_quantity_selector",
+      "label": "Show quantity selector",
+      "default": true
+    }
+  ],
+  "presets": [
+    {
+      "name": "Featured product"
+    }
+  ]
+}
+{% endschema %}

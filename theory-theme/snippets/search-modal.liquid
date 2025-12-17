@@ -1,0 +1,49 @@
+{%- comment -%}
+  Renders the search modal
+
+  Usage:
+  {% render 'search-modal' %}
+{%- endcomment -%}
+
+<div class="search-modal" data-search-modal aria-hidden="true" role="dialog" aria-label="Search">
+  <div class="search-modal__overlay" data-search-modal-close></div>
+
+  <div class="search-modal__container">
+    <div class="search-modal__header">
+      <form action="{{ routes.search_url }}" method="get" class="search-modal__form" role="search">
+        <input type="hidden" name="type" value="product">
+        <input
+          type="search"
+          name="q"
+          class="search-modal__input"
+          placeholder="Search for products..."
+          autocomplete="off"
+          autocorrect="off"
+          autocapitalize="off"
+          spellcheck="false"
+          data-search-input
+        >
+        <button type="submit" class="search-modal__submit" aria-label="Search">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M9 17C13.4183 17 17 13.4183 17 9C17 4.58172 13.4183 1 9 1C4.58172 1 1 4.58172 1 9C1 13.4183 4.58172 17 9 17Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M19 19L14.65 14.65" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </form>
+      <button class="search-modal__close" data-search-modal-close aria-label="Close search">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M15 5L5 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M5 5L15 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="search-modal__results" data-search-results>
+      {%- if settings.predictive_search_enabled -%}
+        <div class="search-modal__predictive" data-predictive-search>
+          <!-- Predictive search results will be loaded here -->
+        </div>
+      {%- endif -%}
+    </div>
+  </div>
+</div>

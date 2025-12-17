@@ -1,0 +1,112 @@
+{
+  "sections": {
+    "hero": {
+      "type": "hero",
+      "settings": {
+        "image": "",
+        "image_overlay_opacity": 0,
+        "heading": "Modern Minimalism",
+        "subheading": "Discover timeless pieces designed for the contemporary wardrobe",
+        "button_label": "Shop Now",
+        "button_link": "/collections/all",
+        "text_position": "center",
+        "text_color": "#FFFFFF",
+        "height": "full"
+      }
+    },
+    "featured-collection": {
+      "type": "featured-collection",
+      "settings": {
+        "heading": "New Arrivals",
+        "collection": "all",
+        "products_to_show": 8,
+        "columns_desktop": 4,
+        "show_view_all": true,
+        "view_all_style": "link"
+      }
+    },
+    "image-with-text": {
+      "type": "image-with-text",
+      "settings": {
+        "image": "",
+        "heading": "Refined Essentials",
+        "text": "Crafted from premium materials with meticulous attention to detail. Our pieces are designed to transcend seasons.",
+        "button_label": "Explore",
+        "button_link": "/collections/all",
+        "image_position": "left",
+        "desktop_content_position": "middle",
+        "color_scheme": "light"
+      }
+    },
+    "collection-list": {
+      "type": "collection-list",
+      "settings": {
+        "heading": "Shop by Category",
+        "columns_desktop": 3
+      },
+      "blocks": {
+        "collection_1": {
+          "type": "collection",
+          "settings": {
+            "collection": "",
+            "title": "Women"
+          }
+        },
+        "collection_2": {
+          "type": "collection",
+          "settings": {
+            "collection": "",
+            "title": "Men"
+          }
+        },
+        "collection_3": {
+          "type": "collection",
+          "settings": {
+            "collection": "",
+            "title": "Accessories"
+          }
+        }
+      },
+      "block_order": ["collection_1", "collection_2", "collection_3"]
+    },
+    "split-banner": {
+      "type": "split-banner",
+      "settings": {
+        "heading_left": "Women's Collection",
+        "button_label_left": "Shop Women",
+        "button_link_left": "/collections/women",
+        "heading_right": "Men's Collection",
+        "button_label_right": "Shop Men",
+        "button_link_right": "/collections/men"
+      }
+    },
+    "featured-product": {
+      "type": "featured-product",
+      "settings": {
+        "product": "",
+        "heading": "Featured",
+        "show_vendor": false,
+        "show_quantity_selector": true,
+        "enable_video_looping": false
+      }
+    },
+    "newsletter": {
+      "type": "newsletter",
+      "settings": {
+        "heading": "Stay Connected",
+        "subheading": "Subscribe for exclusive offers, new arrivals, and style inspiration.",
+        "button_label": "Subscribe",
+        "show_social": true
+      }
+    }
+  },
+  "order": [
+    "hero",
+    "featured-collection",
+    "image-with-text",
+    "collection-list",
+    "split-banner",
+    "featured-product",
+    "newsletter"
+  ]
+}

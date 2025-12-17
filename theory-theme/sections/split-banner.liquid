@@ -1,0 +1,145 @@
+<section class="split-banner" data-section-id="{{ section.id }}" data-section-type="split-banner">
+  <div class="split-banner__container">
+    <div class="split-banner__item split-banner__item--left">
+      <a href="{{ section.settings.button_link_left }}" class="split-banner__link">
+        <div class="split-banner__media">
+          {%- if section.settings.image_left != blank -%}
+            {{ section.settings.image_left | image_url: width: 1200 | image_tag:
+              loading: 'lazy',
+              class: 'split-banner__image',
+              sizes: '(min-width: 990px) 50vw, 100vw',
+              widths: '375, 550, 750, 1100, 1200'
+            }}
+          {%- else -%}
+            <div class="split-banner__placeholder">
+              {{ 'lifestyle-1' | placeholder_svg_tag: 'split-banner__placeholder-svg' }}
+            </div>
+          {%- endif -%}
+          <div class="split-banner__overlay"></div>
+        </div>
+        <div class="split-banner__content">
+          {%- if section.settings.subheading_left != blank -%}
+            <p class="split-banner__subheading">{{ section.settings.subheading_left }}</p>
+          {%- endif -%}
+          {%- if section.settings.heading_left != blank -%}
+            <h2 class="split-banner__heading">{{ section.settings.heading_left }}</h2>
+          {%- endif -%}
+          {%- if section.settings.button_label_left != blank -%}
+            <span class="split-banner__button button button--secondary-light">
+              {{ section.settings.button_label_left }}
+            </span>
+          {%- endif -%}
+        </div>
+      </a>
+    </div>
+
+    <div class="split-banner__item split-banner__item--right">
+      <a href="{{ section.settings.button_link_right }}" class="split-banner__link">
+        <div class="split-banner__media">
+          {%- if section.settings.image_right != blank -%}
+            {{ section.settings.image_right | image_url: width: 1200 | image_tag:
+              loading: 'lazy',
+              class: 'split-banner__image',
+              sizes: '(min-width: 990px) 50vw, 100vw',
+              widths: '375, 550, 750, 1100, 1200'
+            }}
+          {%- else -%}
+            <div class="split-banner__placeholder">
+              {{ 'lifestyle-2' | placeholder_svg_tag: 'split-banner__placeholder-svg' }}
+            </div>
+          {%- endif -%}
+          <div class="split-banner__overlay"></div>
+        </div>
+        <div class="split-banner__content">
+          {%- if section.settings.subheading_right != blank -%}
+            <p class="split-banner__subheading">{{ section.settings.subheading_right }}</p>
+          {%- endif -%}
+          {%- if section.settings.heading_right != blank -%}
+            <h2 class="split-banner__heading">{{ section.settings.heading_right }}</h2>
+          {%- endif -%}
+          {%- if section.settings.button_label_right != blank -%}
+            <span class="split-banner__button button button--secondary-light">
+              {{ section.settings.button_label_right }}
+            </span>
+          {%- endif -%}
+        </div>
+      </a>
+    </div>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Split banner",
+  "class": "section-split-banner",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Left panel"
+    },
+    {
+      "type": "image_picker",
+      "id": "image_left",
+      "label": "Image"
+    },
+    {
+      "type": "text",
+      "id": "subheading_left",
+      "label": "Subheading"
+    },
+    {
+      "type": "text",
+      "id": "heading_left",
+      "label": "Heading",
+      "default": "Women's Collection"
+    },
+    {
+      "type": "text",
+      "id": "button_label_left",
+      "label": "Button label",
+      "default": "Shop Women"
+    },
+    {
+      "type": "url",
+      "id": "button_link_left",
+      "label": "Button link"
+    },
+    {
+      "type": "header",
+      "content": "Right panel"
+    },
+    {
+      "type": "image_picker",
+      "id": "image_right",
+      "label": "Image"
+    },
+    {
+      "type": "text",
+      "id": "subheading_right",
+      "label": "Subheading"
+    },
+    {
+      "type": "text",
+      "id": "heading_right",
+      "label": "Heading",
+      "default": "Men's Collection"
+    },
+    {
+      "type": "text",
+      "id": "button_label_right",
+      "label": "Button label",
+      "default": "Shop Men"
+    },
+    {
+      "type": "url",
+      "id": "button_link_right",
+      "label": "Button link"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Split banner"
+    }
+  ]
+}
+{% endschema %}
